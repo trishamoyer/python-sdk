@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2017 IBM All Rights Reserved.
+# Copyright 2018 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 IBM Watson Natural Language Classifier uses machine learning algorithms to return the top
 matching predefined classes for short text input. You create and train a classifier to
@@ -30,13 +31,15 @@ from .watson_service import WatsonService
 # Service
 ##############################################################################
 
-
 class NaturalLanguageClassifierV1(WatsonService):
     """The Natural Language Classifier V1 service."""
 
     default_url = 'https://gateway.watsonplatform.net/natural-language-classifier/api'
 
-    def __init__(self, url=default_url, username=None, password=None):
+    def __init__(self,
+                 url=default_url,
+                 username=None,
+                 password=None):
         """
         Construct a new client for the Natural Language Classifier service.
 
@@ -58,24 +61,23 @@ class NaturalLanguageClassifierV1(WatsonService):
 
         """
 
-        WatsonService.__init__(
-            self,
-            vcap_services_name='natural_language_classifier',
-            url=url,
-            username=username,
-            password=password,
-            use_vcap_services=True)
+        WatsonService.__init__(self,
+                                     vcap_services_name='natural_language_classifier',
+                                     url=url,
+                                     username=username,
+                                     password=password,
+                                     use_vcap_services=True)
 
     #########################
-    # naturallanguageclassifier
+    # classifyText
     #########################
 
     def classify(self, classifier_id, text):
         """
-        Returns label information for the input.
+        Classify a phrase.
 
-        The status must be `Available` before you can use the classifier to classify text.
-        Use `Get information about a classifier` to retrieve the status.
+        Returns label information for the input. The status must be `Available` before you
+        can use the classifier to classify text.
 
         :param str classifier_id: Classifier ID to use.
         :param str text: The submitted phrase.
@@ -86,25 +88,29 @@ class NaturalLanguageClassifierV1(WatsonService):
             raise ValueError('classifier_id must be provided')
         if text is None:
             raise ValueError('text must be provided')
-        data = {'text': text}
-        url = '/v1/classifiers/{0}/classify'.format(
-            *self._encode_path_vars(classifier_id))
-        response = self.request(
-            method='POST', url=url, json=data, accept_json=True)
+        data = {
+            'text': text
+        }
+        url='/v1/classifiers/{0}/classify'.format(*self._encode_path_vars(classifier_id))
+        response = self.request(method='POST',
+            url=url,
+            json=data,
+            accept_json=True)
         return response
 
-    def create_classifier(self,
-                          metadata,
-                          training_data,
-                          metadata_filename=None,
-                          training_data_filename=None):
+
+    #########################
+    # manageClassifiers
+    #########################
+
+    def create_classifier(self, metadata, training_data, metadata_filename=None, training_data_filename=None):
         """
         Create classifier.
 
         Sends data to create and train a classifier and returns information about the new
         classifier.
 
-        :param file metadata: Metadata in JSON format. The metadata identifies the language of the data, and an optional name to identify the classifier. For details, see the [API reference](https://www.ibm.com/watson/developercloud/natural-language-classifier/api/v1/python.html?python#create-classifier).
+        :param file metadata: Metadata in JSON format. The metadata identifies the language of the data, and an optional name to identify the classifier.
         :param file training_data: Training data in CSV format. Each text value must have at least one class. The data can include up to 15,000 records. For details, see [Using your own data](https://console.bluemix.net/docs/services/natural-language-classifier/using-your-data.html).
         :param str metadata_filename: The filename for training_metadata.
         :param str training_data_filename: The filename for training_data.
@@ -123,16 +129,14 @@ class NaturalLanguageClassifierV1(WatsonService):
             training_data_filename = training_data.name
         mime_type = 'text/csv'
         training_data_tuple = (training_data_filename, training_data, mime_type)
-        url = '/v1/classifiers'
-        response = self.request(
-            method='POST',
+        url='/v1/classifiers'
+        response = self.request(method='POST',
             url=url,
-            files={
-                'training_metadata': metadata_tuple,
-                'training_data': training_data_tuple
-            },
+            files={ 'training_metadata': metadata_tuple, 
+            'training_data': training_data_tuple },
             accept_json=True)
         return response
+
 
     def delete_classifier(self, classifier_id):
         """
@@ -143,10 +147,12 @@ class NaturalLanguageClassifierV1(WatsonService):
         """
         if classifier_id is None:
             raise ValueError('classifier_id must be provided')
-        url = '/v1/classifiers/{0}'.format(
-            *self._encode_path_vars(classifier_id))
-        self.request(method='DELETE', url=url, accept_json=True)
+        url='/v1/classifiers/{0}'.format(*self._encode_path_vars(classifier_id))
+        self.request(method='DELETE',
+            url=url,
+            accept_json=True)
         return None
+
 
     def get_classifier(self, classifier_id):
         """
@@ -160,10 +166,12 @@ class NaturalLanguageClassifierV1(WatsonService):
         """
         if classifier_id is None:
             raise ValueError('classifier_id must be provided')
-        url = '/v1/classifiers/{0}'.format(
-            *self._encode_path_vars(classifier_id))
-        response = self.request(method='GET', url=url, accept_json=True)
+        url='/v1/classifiers/{0}'.format(*self._encode_path_vars(classifier_id))
+        response = self.request(method='GET',
+            url=url,
+            accept_json=True)
         return response
+
 
     def list_classifiers(self):
         """
@@ -174,9 +182,12 @@ class NaturalLanguageClassifierV1(WatsonService):
         :return: A `dict` containing the `ClassifierList` response.
         :rtype: dict
         """
-        url = '/v1/classifiers'
-        response = self.request(method='GET', url=url, accept_json=True)
+        url='/v1/classifiers'
+        response = self.request(method='GET',
+            url=url,
+            accept_json=True)
         return response
+
 
 
 ##############################################################################
@@ -195,12 +206,7 @@ class Classification(object):
     :attr list[ClassifiedClass] classes: (optional) An array of up to ten class-confidence pairs sorted in descending order of confidence.
     """
 
-    def __init__(self,
-                 classifier_id=None,
-                 url=None,
-                 text=None,
-                 top_class=None,
-                 classes=None):
+    def __init__(self, classifier_id=None, url=None, text=None, top_class=None, classes=None):
         """
         Initialize a Classification object.
 
@@ -229,9 +235,7 @@ class Classification(object):
         if 'top_class' in _dict:
             args['top_class'] = _dict['top_class']
         if 'classes' in _dict:
-            args['classes'] = [
-                ClassifiedClass._from_dict(x) for x in _dict['classes']
-            ]
+            args['classes'] = [ClassifiedClass._from_dict(x) for x in _dict['classes']]
         return cls(**args)
 
     def _to_dict(self):
@@ -329,14 +333,7 @@ class Classifier(object):
     :attr str language: (optional) The language used for the classifier.
     """
 
-    def __init__(self,
-                 url,
-                 classifier_id,
-                 name=None,
-                 status=None,
-                 created=None,
-                 status_description=None,
-                 language=None):
+    def __init__(self, url, classifier_id, name=None, status=None, created=None, status_description=None, language=None):
         """
         Initialize a Classifier object.
 
@@ -365,16 +362,13 @@ class Classifier(object):
         if 'url' in _dict:
             args['url'] = _dict['url']
         else:
-            raise ValueError(
-                'Required property \'url\' not present in Classifier JSON')
+            raise ValueError('Required property \'url\' not present in Classifier JSON')
         if 'status' in _dict:
             args['status'] = _dict['status']
         if 'classifier_id' in _dict:
             args['classifier_id'] = _dict['classifier_id']
         else:
-            raise ValueError(
-                'Required property \'classifier_id\' not present in Classifier JSON'
-            )
+            raise ValueError('Required property \'classifier_id\' not present in Classifier JSON')
         if 'created' in _dict:
             args['created'] = string_to_datetime(_dict['created'])
         if 'status_description' in _dict:
@@ -396,9 +390,7 @@ class Classifier(object):
             _dict['classifier_id'] = self.classifier_id
         if hasattr(self, 'created') and self.created is not None:
             _dict['created'] = datetime_to_string(self.created)
-        if hasattr(
-                self,
-                'status_description') and self.status_description is not None:
+        if hasattr(self, 'status_description') and self.status_description is not None:
             _dict['status_description'] = self.status_description
         if hasattr(self, 'language') and self.language is not None:
             _dict['language'] = self.language
@@ -439,13 +431,9 @@ class ClassifierList(object):
         """Initialize a ClassifierList object from a json dictionary."""
         args = {}
         if 'classifiers' in _dict:
-            args['classifiers'] = [
-                Classifier._from_dict(x) for x in _dict['classifiers']
-            ]
+            args['classifiers'] = [Classifier._from_dict(x) for x in _dict['classifiers']]
         else:
-            raise ValueError(
-                'Required property \'classifiers\' not present in ClassifierList JSON'
-            )
+            raise ValueError('Required property \'classifiers\' not present in ClassifierList JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -468,3 +456,5 @@ class ClassifierList(object):
     def __ne__(self, other):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
+
