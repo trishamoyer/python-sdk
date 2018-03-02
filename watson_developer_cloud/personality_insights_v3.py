@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2017 IBM All Rights Reserved.
+# Copyright 2018 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 ### Service Overview
 The IBM Watson Personality Insights service provides a Representational State Transfer
@@ -32,7 +33,7 @@ to 20 MB of input data and produces results in JSON or CSV format. The service a
 input in Arabic, English, Japanese, Korean, or Spanish and can produce output in a variety
 of languages.
 * **Authentication:** You authenticate to the service by using your service credentials.
-You can use your credentials to authenticate via a proxy server that resides in Bluemix,
+You can use your credentials to authenticate via a proxy server that resides in IBM Cloud,
 or you can use your credentials to obtain a token and contact the service directly. See
 [Service credentials for Watson
 services](https://console.bluemix.net/docs/services/watson/getting-started-credentials.html)
@@ -64,13 +65,16 @@ from .watson_service import WatsonService
 # Service
 ##############################################################################
 
-
 class PersonalityInsightsV3(WatsonService):
     """The Personality Insights V3 service."""
 
     default_url = 'https://gateway.watsonplatform.net/personality-insights/api'
 
-    def __init__(self, version, url=default_url, username=None, password=None):
+    def __init__(self,
+                 version,
+                 url=default_url,
+                 username=None,
+                 password=None):
         """
         Construct a new client for the Personality Insights service.
 
@@ -103,28 +107,19 @@ class PersonalityInsightsV3(WatsonService):
 
         """
 
-        WatsonService.__init__(
-            self,
-            vcap_services_name='personality_insights',
-            url=url,
-            username=username,
-            password=password,
-            use_vcap_services=True)
+        WatsonService.__init__(self,
+                                     vcap_services_name='personality_insights',
+                                     url=url,
+                                     username=username,
+                                     password=password,
+                                     use_vcap_services=True)
         self.version = version
 
     #########################
     # personalityinsights
     #########################
 
-    def profile(self,
-                content,
-                content_type='application/json',
-                content_language=None,
-                accept='application/json',
-                accept_language=None,
-                raw_scores=None,
-                csv_headers=None,
-                consumption_preferences=None):
+    def profile(self, content, content_type, content_language=None, accept_language=None, raw_scores=None, csv_headers=None, consumption_preferences=None):
         """
         Generates a personality profile based on input text.
 
@@ -139,23 +134,21 @@ class PersonalityInsightsV3(WatsonService):
         :param Content content: A maximum of 20 MB of content to analyze, though the service requires much less text; for more information, see [Providing sufficient input](https://console.bluemix.net/docs/services/personality-insights/input.html#sufficient). A JSON request must conform to the `Content` model.
         :param str content_type: The type of the input: application/json, text/html, or text/plain. A character encoding can be specified by including a `charset` parameter. For example, 'text/html;charset=utf-8'.
         :param str content_language: The language of the input text for the request: Arabic, English, Japanese, Korean, or Spanish. Regional variants are treated as their parent language; for example, `en-US` is interpreted as `en`. The effect of the `content_language` header depends on the `Content-Type` header. When `Content-Type` is `text/plain` or `text/html`, `content_language` is the only way to specify the language. When `Content-Type` is `application/json`, `content_language` overrides a language specified with the `language` parameter of a `ContentItem` object, and content items that specify a different language are ignored; omit this header to base the language on the specification of the content items. You can specify any combination of languages for `content_language` and `Accept-Language`.
-        :param accept: Type of the response: 'application/json' (default) or 'text/csv'
         :param str accept_language: The desired language of the response. For two-character arguments, regional variants are treated as their parent language; for example, `en-US` is interpreted as `en`. You can specify any combination of languages for the input and response content.
         :param bool raw_scores: If `true`, a raw score in addition to a normalized percentile is returned for each characteristic; raw scores are not compared with a sample population. If `false` (the default), only normalized percentiles are returned.
         :param bool csv_headers: If `true`, column labels are returned with a CSV response; if `false` (the default), they are not. Applies only when the `Accept` header is set to `text/csv`.
         :param bool consumption_preferences: If `true`, information about consumption preferences is returned with the results; if `false` (the default), the response does not include the information.
-        :return: A `dict` containing the `Profile` response.
-        :rtype: dict
+        :return: A `Response <Response>` object representing the response.
+        :rtype: requests.models.Response
         """
         if content is None:
             raise ValueError('content must be provided')
         if content_type is None:
             raise ValueError('content_type must be provided')
         headers = {
-            'content-type': content_type,
+            'Content-Type': content_type,
             'Content-Language': content_language,
-            'Accept-Language': accept_language,
-            'Accept': accept
+            'Accept-Language': accept_language
         }
         params = {
             'version': self.version,
@@ -167,15 +160,66 @@ class PersonalityInsightsV3(WatsonService):
             data = json.dumps(content)
         else:
             data = content
-        url = '/v3/profile'
-        response = self.request(
-            method='POST',
+        url='/v3/profile'
+        response = self.request(method='POST',
             url=url,
             headers=headers,
             params=params,
             data=data,
-            accept_json=(accept is None or accept == 'application/json'))
+            accept_json=False)
         return response
+
+
+    def profile_csv(self, content, content_type, content_language=None, accept_language=None, raw_scores=None, csv_headers=None, consumption_preferences=None):
+        """
+        Generates a personality profile based on input text.
+
+        Derives personality insights for up to 20 MB of input content written by an
+        author, though the service requires much less text to produce an accurate profile;
+        for more information, see [Providing sufficient
+        input](https://console.bluemix.net/docs/services/personality-insights/input.html#sufficient).
+        Accepts input in Arabic, English, Japanese, Korean, or Spanish and produces output
+        in one of eleven languages. Provide plain text, HTML, or JSON content, and receive
+        results in JSON or CSV format.
+
+        :param Content content: A maximum of 20 MB of content to analyze, though the service requires much less text; for more information, see [Providing sufficient input](https://console.bluemix.net/docs/services/personality-insights/input.html#sufficient). A JSON request must conform to the `Content` model.
+        :param str content_type: The type of the input: application/json, text/html, or text/plain. A character encoding can be specified by including a `charset` parameter. For example, 'text/html;charset=utf-8'.
+        :param str content_language: The language of the input text for the request: Arabic, English, Japanese, Korean, or Spanish. Regional variants are treated as their parent language; for example, `en-US` is interpreted as `en`. The effect of the `content_language` header depends on the `Content-Type` header. When `Content-Type` is `text/plain` or `text/html`, `content_language` is the only way to specify the language. When `Content-Type` is `application/json`, `content_language` overrides a language specified with the `language` parameter of a `ContentItem` object, and content items that specify a different language are ignored; omit this header to base the language on the specification of the content items. You can specify any combination of languages for `content_language` and `Accept-Language`.
+        :param str accept_language: The desired language of the response. For two-character arguments, regional variants are treated as their parent language; for example, `en-US` is interpreted as `en`. You can specify any combination of languages for the input and response content.
+        :param bool raw_scores: If `true`, a raw score in addition to a normalized percentile is returned for each characteristic; raw scores are not compared with a sample population. If `false` (the default), only normalized percentiles are returned.
+        :param bool csv_headers: If `true`, column labels are returned with a CSV response; if `false` (the default), they are not. Applies only when the `Accept` header is set to `text/csv`.
+        :param bool consumption_preferences: If `true`, information about consumption preferences is returned with the results; if `false` (the default), the response does not include the information.
+        :return: A `Response <Response>` object representing the response.
+        :rtype: requests.models.Response
+        """
+        if content is None:
+            raise ValueError('content must be provided')
+        if content_type is None:
+            raise ValueError('content_type must be provided')
+        headers = {
+            'Content-Type': content_type,
+            'Content-Language': content_language,
+            'Accept-Language': accept_language
+        }
+        params = {
+            'version': self.version,
+            'raw_scores': raw_scores,
+            'csv_headers': csv_headers,
+            'consumption_preferences': consumption_preferences
+        }
+        if content_type == 'application/json' and isinstance(content, dict):
+            data = json.dumps(content)
+        else:
+            data = content
+        url='/v3/profile'
+        response = self.request(method='POST',
+            url=url,
+            headers=headers,
+            params=params,
+            data=data,
+            accept_json=False)
+        return response
+
 
 
 ##############################################################################
@@ -214,23 +258,19 @@ class Behavior(object):
         if 'trait_id' in _dict:
             args['trait_id'] = _dict['trait_id']
         else:
-            raise ValueError(
-                'Required property \'trait_id\' not present in Behavior JSON')
+            raise ValueError('Required property \'trait_id\' not present in Behavior JSON')
         if 'name' in _dict:
             args['name'] = _dict['name']
         else:
-            raise ValueError(
-                'Required property \'name\' not present in Behavior JSON')
+            raise ValueError('Required property \'name\' not present in Behavior JSON')
         if 'category' in _dict:
             args['category'] = _dict['category']
         else:
-            raise ValueError(
-                'Required property \'category\' not present in Behavior JSON')
+            raise ValueError('Required property \'category\' not present in Behavior JSON')
         if 'percentage' in _dict:
             args['percentage'] = _dict['percentage']
         else:
-            raise ValueError(
-                'Required property \'percentage\' not present in Behavior JSON')
+            raise ValueError('Required property \'percentage\' not present in Behavior JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -287,31 +327,23 @@ class ConsumptionPreferences(object):
         """Initialize a ConsumptionPreferences object from a json dictionary."""
         args = {}
         if 'consumption_preference_id' in _dict:
-            args['consumption_preference_id'] = _dict[
-                'consumption_preference_id']
+            args['consumption_preference_id'] = _dict['consumption_preference_id']
         else:
-            raise ValueError(
-                'Required property \'consumption_preference_id\' not present in ConsumptionPreferences JSON'
-            )
+            raise ValueError('Required property \'consumption_preference_id\' not present in ConsumptionPreferences JSON')
         if 'name' in _dict:
             args['name'] = _dict['name']
         else:
-            raise ValueError(
-                'Required property \'name\' not present in ConsumptionPreferences JSON'
-            )
+            raise ValueError('Required property \'name\' not present in ConsumptionPreferences JSON')
         if 'score' in _dict:
             args['score'] = _dict['score']
         else:
-            raise ValueError(
-                'Required property \'score\' not present in ConsumptionPreferences JSON'
-            )
+            raise ValueError('Required property \'score\' not present in ConsumptionPreferences JSON')
         return cls(**args)
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
-        if hasattr(self, 'consumption_preference_id'
-                  ) and self.consumption_preference_id is not None:
+        if hasattr(self, 'consumption_preference_id') and self.consumption_preference_id is not None:
             _dict['consumption_preference_id'] = self.consumption_preference_id
         if hasattr(self, 'name') and self.name is not None:
             _dict['name'] = self.name
@@ -343,8 +375,7 @@ class ConsumptionPreferencesCategory(object):
     :attr list[ConsumptionPreferences] consumption_preferences: Detailed results inferred from the input text for the individual preferences of the category.
     """
 
-    def __init__(self, consumption_preference_category_id, name,
-                 consumption_preferences):
+    def __init__(self, consumption_preference_category_id, name, consumption_preferences):
         """
         Initialize a ConsumptionPreferencesCategory object.
 
@@ -361,43 +392,28 @@ class ConsumptionPreferencesCategory(object):
         """Initialize a ConsumptionPreferencesCategory object from a json dictionary."""
         args = {}
         if 'consumption_preference_category_id' in _dict:
-            args['consumption_preference_category_id'] = _dict[
-                'consumption_preference_category_id']
+            args['consumption_preference_category_id'] = _dict['consumption_preference_category_id']
         else:
-            raise ValueError(
-                'Required property \'consumption_preference_category_id\' not present in ConsumptionPreferencesCategory JSON'
-            )
+            raise ValueError('Required property \'consumption_preference_category_id\' not present in ConsumptionPreferencesCategory JSON')
         if 'name' in _dict:
             args['name'] = _dict['name']
         else:
-            raise ValueError(
-                'Required property \'name\' not present in ConsumptionPreferencesCategory JSON'
-            )
+            raise ValueError('Required property \'name\' not present in ConsumptionPreferencesCategory JSON')
         if 'consumption_preferences' in _dict:
-            args['consumption_preferences'] = [
-                ConsumptionPreferences._from_dict(x)
-                for x in _dict['consumption_preferences']
-            ]
+            args['consumption_preferences'] = [ConsumptionPreferences._from_dict(x) for x in _dict['consumption_preferences']]
         else:
-            raise ValueError(
-                'Required property \'consumption_preferences\' not present in ConsumptionPreferencesCategory JSON'
-            )
+            raise ValueError('Required property \'consumption_preferences\' not present in ConsumptionPreferencesCategory JSON')
         return cls(**args)
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
-        if hasattr(self, 'consumption_preference_category_id'
-                  ) and self.consumption_preference_category_id is not None:
-            _dict[
-                'consumption_preference_category_id'] = self.consumption_preference_category_id
+        if hasattr(self, 'consumption_preference_category_id') and self.consumption_preference_category_id is not None:
+            _dict['consumption_preference_category_id'] = self.consumption_preference_category_id
         if hasattr(self, 'name') and self.name is not None:
             _dict['name'] = self.name
-        if hasattr(self, 'consumption_preferences'
-                  ) and self.consumption_preferences is not None:
-            _dict['consumption_preferences'] = [
-                x._to_dict() for x in self.consumption_preferences
-            ]
+        if hasattr(self, 'consumption_preferences') and self.consumption_preferences is not None:
+            _dict['consumption_preferences'] = [x._to_dict() for x in self.consumption_preferences]
         return _dict
 
     def __str__(self):
@@ -435,13 +451,9 @@ class Content(object):
         """Initialize a Content object from a json dictionary."""
         args = {}
         if 'contentItems' in _dict:
-            args['content_items'] = [
-                ContentItem._from_dict(x) for x in _dict['contentItems']
-            ]
+            args['content_items'] = [ContentItem._from_dict(x) for x in _dict['contentItems']]
         else:
-            raise ValueError(
-                'Required property \'contentItems\' not present in Content JSON'
-            )
+            raise ValueError('Required property \'contentItems\' not present in Content JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -481,16 +493,7 @@ class ContentItem(object):
     :attr bool forward: (optional) Indicates whether this content item is a forwarded/copied version of another content item.
     """
 
-    def __init__(self,
-                 content,
-                 id=None,
-                 created=None,
-                 updated=None,
-                 contenttype=None,
-                 language=None,
-                 parentid=None,
-                 reply=None,
-                 forward=None):
+    def __init__(self, content, id=None, created=None, updated=None, contenttype=None, language=None, parentid=None, reply=None, forward=None):
         """
         Initialize a ContentItem object.
 
@@ -521,8 +524,7 @@ class ContentItem(object):
         if 'content' in _dict:
             args['content'] = _dict['content']
         else:
-            raise ValueError(
-                'Required property \'content\' not present in ContentItem JSON')
+            raise ValueError('Required property \'content\' not present in ContentItem JSON')
         if 'id' in _dict:
             args['id'] = _dict['id']
         if 'created' in _dict:
@@ -594,16 +596,7 @@ class Profile(object):
     :attr list[Warning] warnings: Warning messages associated with the input text submitted with the request. The array is empty if the input generated no warnings.
     """
 
-    def __init__(self,
-                 processed_language,
-                 word_count,
-                 personality,
-                 values,
-                 needs,
-                 warnings,
-                 word_count_message=None,
-                 behavior=None,
-                 consumption_preferences=None):
+    def __init__(self, processed_language, word_count, personality, values, needs, warnings, word_count_message=None, behavior=None, consumption_preferences=None):
         """
         Initialize a Profile object.
 
@@ -634,63 +627,43 @@ class Profile(object):
         if 'processed_language' in _dict:
             args['processed_language'] = _dict['processed_language']
         else:
-            raise ValueError(
-                'Required property \'processed_language\' not present in Profile JSON'
-            )
+            raise ValueError('Required property \'processed_language\' not present in Profile JSON')
         if 'word_count' in _dict:
             args['word_count'] = _dict['word_count']
         else:
-            raise ValueError(
-                'Required property \'word_count\' not present in Profile JSON')
+            raise ValueError('Required property \'word_count\' not present in Profile JSON')
         if 'word_count_message' in _dict:
             args['word_count_message'] = _dict['word_count_message']
         if 'personality' in _dict:
-            args['personality'] = [
-                Trait._from_dict(x) for x in _dict['personality']
-            ]
+            args['personality'] = [Trait._from_dict(x) for x in _dict['personality']]
         else:
-            raise ValueError(
-                'Required property \'personality\' not present in Profile JSON')
+            raise ValueError('Required property \'personality\' not present in Profile JSON')
         if 'values' in _dict:
             args['values'] = [Trait._from_dict(x) for x in _dict['values']]
         else:
-            raise ValueError(
-                'Required property \'values\' not present in Profile JSON')
+            raise ValueError('Required property \'values\' not present in Profile JSON')
         if 'needs' in _dict:
             args['needs'] = [Trait._from_dict(x) for x in _dict['needs']]
         else:
-            raise ValueError(
-                'Required property \'needs\' not present in Profile JSON')
+            raise ValueError('Required property \'needs\' not present in Profile JSON')
         if 'behavior' in _dict:
-            args['behavior'] = [
-                Behavior._from_dict(x) for x in _dict['behavior']
-            ]
+            args['behavior'] = [Behavior._from_dict(x) for x in _dict['behavior']]
         if 'consumption_preferences' in _dict:
-            args['consumption_preferences'] = [
-                ConsumptionPreferencesCategory._from_dict(x)
-                for x in _dict['consumption_preferences']
-            ]
+            args['consumption_preferences'] = [ConsumptionPreferencesCategory._from_dict(x) for x in _dict['consumption_preferences']]
         if 'warnings' in _dict:
-            args['warnings'] = [
-                Warning._from_dict(x) for x in _dict['warnings']
-            ]
+            args['warnings'] = [Warning._from_dict(x) for x in _dict['warnings']]
         else:
-            raise ValueError(
-                'Required property \'warnings\' not present in Profile JSON')
+            raise ValueError('Required property \'warnings\' not present in Profile JSON')
         return cls(**args)
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
-        if hasattr(
-                self,
-                'processed_language') and self.processed_language is not None:
+        if hasattr(self, 'processed_language') and self.processed_language is not None:
             _dict['processed_language'] = self.processed_language
         if hasattr(self, 'word_count') and self.word_count is not None:
             _dict['word_count'] = self.word_count
-        if hasattr(
-                self,
-                'word_count_message') and self.word_count_message is not None:
+        if hasattr(self, 'word_count_message') and self.word_count_message is not None:
             _dict['word_count_message'] = self.word_count_message
         if hasattr(self, 'personality') and self.personality is not None:
             _dict['personality'] = [x._to_dict() for x in self.personality]
@@ -700,11 +673,8 @@ class Profile(object):
             _dict['needs'] = [x._to_dict() for x in self.needs]
         if hasattr(self, 'behavior') and self.behavior is not None:
             _dict['behavior'] = [x._to_dict() for x in self.behavior]
-        if hasattr(self, 'consumption_preferences'
-                  ) and self.consumption_preferences is not None:
-            _dict['consumption_preferences'] = [
-                x._to_dict() for x in self.consumption_preferences
-            ]
+        if hasattr(self, 'consumption_preferences') and self.consumption_preferences is not None:
+            _dict['consumption_preferences'] = [x._to_dict() for x in self.consumption_preferences]
         if hasattr(self, 'warnings') and self.warnings is not None:
             _dict['warnings'] = [x._to_dict() for x in self.warnings]
         return _dict
@@ -733,18 +703,11 @@ class Trait(object):
     :attr str category: The category of the characteristic: * `personality` for Big Five personality characteristics * `needs` for Needs * `values` for Values.
     :attr float percentile: The normalized percentile score for the characteristic. The range is 0 to 1. For example, if the percentage for Openness is 0.60, the author scored in the 60th percentile; the author is more open than 59 percent of the population and less open than 39 percent of the population.
     :attr float raw_score: (optional) The raw score for the characteristic. The range is 0 to 1. A higher score generally indicates a greater likelihood that the author has that characteristic, but raw scores must be considered in aggregate: The range of values in practice might be much smaller than 0 to 1, so an individual score must be considered in the context of the overall scores and their range. The raw score is computed based on the input and the service model; it is not normalized or compared with a sample population. The raw score enables comparison of the results against a different sampling population and with a custom normalization approach.
-    :attr bool significant: (optional) **`2017-10-13`**: Indicates whether the characteristic is meaningful for the input language. The field is always `true` for all characteristics of English, Spanish, and Japanese input. The field is `false` for the subset of characteristics of Arabic and Korean input for which the service's models are unable to generate meaningful results. **`2016-10-20`**: Not returned.
+    :attr bool significant: (optional) **`2017-10-13`**: Indicates whether the characteristic is meaningful for the input language. The field is always `true` for all characteristics of English, Spanish, and Japanese input. The field is `false` for the subset of characteristics of Arabic and Korean input for which the service's models are unable to generate meaningful results. **`2016-10-19`**: Not returned.
     :attr list[Trait] children: (optional) For `personality` (Big Five) dimensions, more detailed results for the facets of each dimension as inferred from the input text.
     """
 
-    def __init__(self,
-                 trait_id,
-                 name,
-                 category,
-                 percentile,
-                 raw_score=None,
-                 significant=None,
-                 children=None):
+    def __init__(self, trait_id, name, category, percentile, raw_score=None, significant=None, children=None):
         """
         Initialize a Trait object.
 
@@ -753,7 +716,7 @@ class Trait(object):
         :param str category: The category of the characteristic: * `personality` for Big Five personality characteristics * `needs` for Needs * `values` for Values.
         :param float percentile: The normalized percentile score for the characteristic. The range is 0 to 1. For example, if the percentage for Openness is 0.60, the author scored in the 60th percentile; the author is more open than 59 percent of the population and less open than 39 percent of the population.
         :param float raw_score: (optional) The raw score for the characteristic. The range is 0 to 1. A higher score generally indicates a greater likelihood that the author has that characteristic, but raw scores must be considered in aggregate: The range of values in practice might be much smaller than 0 to 1, so an individual score must be considered in the context of the overall scores and their range. The raw score is computed based on the input and the service model; it is not normalized or compared with a sample population. The raw score enables comparison of the results against a different sampling population and with a custom normalization approach.
-        :param bool significant: (optional) **`2017-10-13`**: Indicates whether the characteristic is meaningful for the input language. The field is always `true` for all characteristics of English, Spanish, and Japanese input. The field is `false` for the subset of characteristics of Arabic and Korean input for which the service's models are unable to generate meaningful results. **`2016-10-20`**: Not returned.
+        :param bool significant: (optional) **`2017-10-13`**: Indicates whether the characteristic is meaningful for the input language. The field is always `true` for all characteristics of English, Spanish, and Japanese input. The field is `false` for the subset of characteristics of Arabic and Korean input for which the service's models are unable to generate meaningful results. **`2016-10-19`**: Not returned.
         :param list[Trait] children: (optional) For `personality` (Big Five) dimensions, more detailed results for the facets of each dimension as inferred from the input text.
         """
         self.trait_id = trait_id
@@ -771,23 +734,19 @@ class Trait(object):
         if 'trait_id' in _dict:
             args['trait_id'] = _dict['trait_id']
         else:
-            raise ValueError(
-                'Required property \'trait_id\' not present in Trait JSON')
+            raise ValueError('Required property \'trait_id\' not present in Trait JSON')
         if 'name' in _dict:
             args['name'] = _dict['name']
         else:
-            raise ValueError(
-                'Required property \'name\' not present in Trait JSON')
+            raise ValueError('Required property \'name\' not present in Trait JSON')
         if 'category' in _dict:
             args['category'] = _dict['category']
         else:
-            raise ValueError(
-                'Required property \'category\' not present in Trait JSON')
+            raise ValueError('Required property \'category\' not present in Trait JSON')
         if 'percentile' in _dict:
             args['percentile'] = _dict['percentile']
         else:
-            raise ValueError(
-                'Required property \'percentile\' not present in Trait JSON')
+            raise ValueError('Required property \'percentile\' not present in Trait JSON')
         if 'raw_score' in _dict:
             args['raw_score'] = _dict['raw_score']
         if 'significant' in _dict:
@@ -855,13 +814,11 @@ class Warning(object):
         if 'warning_id' in _dict:
             args['warning_id'] = _dict['warning_id']
         else:
-            raise ValueError(
-                'Required property \'warning_id\' not present in Warning JSON')
+            raise ValueError('Required property \'warning_id\' not present in Warning JSON')
         if 'message' in _dict:
             args['message'] = _dict['message']
         else:
-            raise ValueError(
-                'Required property \'message\' not present in Warning JSON')
+            raise ValueError('Required property \'message\' not present in Warning JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -886,3 +843,5 @@ class Warning(object):
     def __ne__(self, other):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
+
