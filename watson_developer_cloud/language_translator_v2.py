@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2017 IBM All Rights Reserved.
+# Copyright 2018 IBM All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """
 Language Translator translates text from one language to another. The service offers
 multiple domain-specific models that you can customize based on your unique terminology
@@ -29,13 +30,15 @@ from .watson_service import WatsonService
 # Service
 ##############################################################################
 
-
 class LanguageTranslatorV2(WatsonService):
     """The Language Translator V2 service."""
 
     default_url = 'https://gateway.watsonplatform.net/language-translator/api'
 
-    def __init__(self, url=default_url, username=None, password=None):
+    def __init__(self,
+                 url=default_url,
+                 username=None,
+                 password=None):
         """
         Construct a new client for the Language Translator service.
 
@@ -57,13 +60,12 @@ class LanguageTranslatorV2(WatsonService):
 
         """
 
-        WatsonService.__init__(
-            self,
-            vcap_services_name='language_translator',
-            url=url,
-            username=username,
-            password=password,
-            use_vcap_services=True)
+        WatsonService.__init__(self,
+                                     vcap_services_name='language_translator',
+                                     url=url,
+                                     username=username,
+                                     password=password,
+                                     use_vcap_services=True)
 
     #########################
     # translate
@@ -71,12 +73,14 @@ class LanguageTranslatorV2(WatsonService):
 
     def translate(self, text, model_id=None, source=None, target=None):
         """
+        Translate.
+
         Translates the input text from the source language to the target language.
 
-        :param list[str] text: Input text in UTF-8 encoding. It is a list so that multiple paragraphs can be submitted. Also accept a single string, instead of an array, as valid input.
-        :param str model_id: The unique model_id of the translation model being used to translate text. The model_id inherently specifies source language, target language, and domain. If the model_id is specified, there is no need for the source and target parameters and the values are ignored.
-        :param str source: Used in combination with target as an alternative way to select the model for translation. When target and source are set, and model_id is not set, the system chooses a default model with the right language pair to translate (usually the model based on the news domain).
-        :param str target: Used in combination with source as an alternative way to select the model for translation. When target and source are set, and model_id is not set, the system chooses a default model with the right language pair to translate (usually the model based on the news domain).
+        :param list[str] text: Input text in UTF-8 encoding. Multiple entries will result in multiple translations in the response.
+        :param str model_id: Model ID of the translation model to use. If this is specified, the `source` and `target` parameters will be ignored. The method requires either a model ID or both the `source` and `target` parameters.
+        :param str source: Language code of the source text language. Use with `target` as an alternative way to select a translation model. When `source` and `target` are set, and a model ID is not set, the system chooses a default model for the language pair (usually the model based on the news domain).
+        :param str target: Language code of the translation target language. Use with source as an alternative way to select a translation model.
         :return: A `dict` containing the `TranslationResult` response.
         :rtype: dict
         """
@@ -88,10 +92,13 @@ class LanguageTranslatorV2(WatsonService):
             'source': source,
             'target': target
         }
-        url = '/v2/translate'
-        response = self.request(
-            method='POST', url=url, json=data, accept_json=True)
+        url='/v2/translate'
+        response = self.request(method='POST',
+            url=url,
+            json=data,
+            accept_json=True)
         return response
+
 
     #########################
     # identify
@@ -99,58 +106,84 @@ class LanguageTranslatorV2(WatsonService):
 
     def identify(self, text):
         """
+        Identify language.
+
         Identifies the language of the input text.
 
         :param str text: Input text in UTF-8 format.
-        :return: A `dict` containing the `IdentifiedLanguages` response.
-        :rtype: dict
+        :return: A `Response <Response>` object representing the response.
+        :rtype: requests.models.Response
         """
         if text is None:
             raise ValueError('text must be provided')
         data = text
         headers = {'content-type': 'text/plain'}
-        url = '/v2/identify'
-        response = self.request(
-            method='POST',
+        url='/v2/identify'
+        response = self.request(method='POST',
             url=url,
             headers=headers,
             data=data,
-            accept_json=True)
+            accept_json=False)
         return response
+
+
+    def identify_plain(self, text):
+        """
+        Identify language.
+
+        Identifies the language of the input text.
+
+        :param str text: Input text in UTF-8 format.
+        :return: A `Response <Response>` object representing the response.
+        :rtype: requests.models.Response
+        """
+        if text is None:
+            raise ValueError('text must be provided')
+        data = text
+        headers = {'content-type': 'text/plain'}
+        url='/v2/identify'
+        response = self.request(method='POST',
+            url=url,
+            headers=headers,
+            data=data,
+            accept_json=False)
+        return response
+
 
     def list_identifiable_languages(self):
         """
-        Lists all languages that can be identified by the API.
+        List identifiable languages.
 
-        Lists all languages that the service can identify. Returns the two-letter code
-        (for example, `en` for English or `es` for Spanish) and name of each language.
+        Lists the languages that the service can identify. Returns the language code (for
+        example, `en` for English or `es` for Spanish) and name of each language.
 
         :return: A `dict` containing the `IdentifiableLanguages` response.
         :rtype: dict
         """
-        url = '/v2/identifiable_languages'
-        response = self.request(method='GET', url=url, accept_json=True)
+        url='/v2/identifiable_languages'
+        response = self.request(method='GET',
+            url=url,
+            accept_json=True)
         return response
+
 
     #########################
     # models
     #########################
 
-    def create_model(self,
-                     base_model_id,
-                     name=None,
-                     forced_glossary=None,
-                     parallel_corpus=None,
-                     monolingual_corpus=None,
-                     forced_glossary_filename=None,
-                     parallel_corpus_filename=None,
-                     monolingual_corpus_filename=None):
+    def create_model(self, base_model_id, name=None, forced_glossary=None, parallel_corpus=None, monolingual_corpus=None, forced_glossary_filename=None, parallel_corpus_filename=None, monolingual_corpus_filename=None):
         """
-        Uploads a TMX glossary file on top of a domain to customize a translation model.
+        Create model.
 
-        :param str base_model_id: Specifies the domain model that is used as the base for the training. To see current supported domain models, use the GET /v2/models parameter.
-        :param str name: The model name. Valid characters are letters, numbers, -, and _. No spaces.
-        :param file forced_glossary: A TMX file with your customizations. The customizations in the file completely overwrite the domain data translation, including high frequency or high confidence phrase translations. You can upload only one glossary with a file size less than 10 MB per call.
+        Uploads a TMX glossary file on top of a domain to customize a translation model.
+        Depending on the size of the file, training can range from minutes for a glossary
+        to several hours for a large parallel corpus. Glossary files must be less than 10
+        MB. The cumulative file size of all uploaded glossary and corpus files is limited
+        to 250 MB.
+
+        :param str base_model_id: The model ID of the model to use as the base for customization. To see available models, use the `List models` method.
+        :param str name: An optional model name that you can use to identify the model. Valid characters are letters, numbers, dashes, underscores, spaces and apostrophes. The maximum length is 32 characters.
+        :param file forced_glossary: A TMX file with your customizations. The customizations in the file completely overwrite the domain translaton data, including high frequency or high confidence phrase translations. You can upload only one glossary with a file size less than 10 MB per call.
         :param file parallel_corpus: A TMX file that contains entries that are treated as a parallel corpus instead of a glossary.
         :param file monolingual_corpus: A UTF-8 encoded plain text file that is used to customize the target language model.
         :param str forced_glossary_filename: The filename for forced_glossary.
@@ -161,87 +194,102 @@ class LanguageTranslatorV2(WatsonService):
         """
         if base_model_id is None:
             raise ValueError('base_model_id must be provided')
-        params = {'base_model_id': base_model_id, 'name': name}
+        params = {
+            'base_model_id': base_model_id,
+            'name': name
+        }
         forced_glossary_tuple = None
         if forced_glossary:
-            if not forced_glossary_filename and hasattr(forced_glossary,
-                                                        'name'):
+            if not forced_glossary_filename and hasattr(forced_glossary, 'name'):
                 forced_glossary_filename = forced_glossary.name
             mime_type = 'application/octet-stream'
-            forced_glossary_tuple = (forced_glossary_filename, forced_glossary,
-                                     mime_type)
+            forced_glossary_tuple = (forced_glossary_filename, forced_glossary, mime_type)
         parallel_corpus_tuple = None
         if parallel_corpus:
-            if not parallel_corpus_filename and hasattr(parallel_corpus,
-                                                        'name'):
+            if not parallel_corpus_filename and hasattr(parallel_corpus, 'name'):
                 parallel_corpus_filename = parallel_corpus.name
             mime_type = 'application/octet-stream'
-            parallel_corpus_tuple = (parallel_corpus_filename, parallel_corpus,
-                                     mime_type)
+            parallel_corpus_tuple = (parallel_corpus_filename, parallel_corpus, mime_type)
         monolingual_corpus_tuple = None
         if monolingual_corpus:
-            if not monolingual_corpus_filename and hasattr(
-                    monolingual_corpus, 'name'):
+            if not monolingual_corpus_filename and hasattr(monolingual_corpus, 'name'):
                 monolingual_corpus_filename = monolingual_corpus.name
             mime_type = 'text/plain'
-            monolingual_corpus_tuple = (monolingual_corpus_filename,
-                                        monolingual_corpus, mime_type)
-        url = '/v2/models'
-        response = self.request(
-            method='POST',
+            monolingual_corpus_tuple = (monolingual_corpus_filename, monolingual_corpus, mime_type)
+        url='/v2/models'
+        response = self.request(method='POST',
             url=url,
             params=params,
-            files={
-                'forced_glossary': forced_glossary_tuple,
-                'parallel_corpus': parallel_corpus_tuple,
-                'monolingual_corpus': monolingual_corpus_tuple
-            },
+            files={ 'forced_glossary': forced_glossary_tuple, 
+            'parallel_corpus': parallel_corpus_tuple, 
+            'monolingual_corpus': monolingual_corpus_tuple },
             accept_json=True)
         return response
 
+
     def delete_model(self, model_id):
         """
+        Delete model.
+
         Deletes a custom translation model.
 
-        :param str model_id: The model identifier.
+        :param str model_id: Model ID of the model to delete.
         :return: A `dict` containing the `DeleteModelResult` response.
         :rtype: dict
         """
         if model_id is None:
             raise ValueError('model_id must be provided')
-        url = '/v2/models/{0}'.format(*self._encode_path_vars(model_id))
-        response = self.request(method='DELETE', url=url, accept_json=True)
+        url='/v2/models/{0}'.format(*self._encode_path_vars(model_id))
+        response = self.request(method='DELETE',
+            url=url,
+            accept_json=True)
         return response
+
 
     def get_model(self, model_id):
         """
-        Get information about the given translation model, including training status.
+        Get model details.
 
-        :param str model_id: Model ID to use.
+        Gets information about a translation model, including training status for custom
+        models.
+
+        :param str model_id: Model ID of the model to get.
         :return: A `dict` containing the `TranslationModel` response.
         :rtype: dict
         """
         if model_id is None:
             raise ValueError('model_id must be provided')
-        url = '/v2/models/{0}'.format(*self._encode_path_vars(model_id))
-        response = self.request(method='GET', url=url, accept_json=True)
+        url='/v2/models/{0}'.format(*self._encode_path_vars(model_id))
+        response = self.request(method='GET',
+            url=url,
+            accept_json=True)
         return response
+
 
     def list_models(self, source=None, target=None, default_models=None):
         """
-        Lists available standard and custom models by source or target language.
+        List models.
 
-        :param str source: Filter models by source language.
-        :param str target: Filter models by target language.
-        :param bool default_models: Valid values are leaving it unset, `true`, and `false`. When `true`, it filters models to return the default_models model or models. When `false`, it returns the non-default_models model or models. If not set, it returns all models, default_models and non-default_models.
+        Lists available translation models.
+
+        :param str source: Specify a language code to filter results by source language.
+        :param str target: Specify a language code to filter results by target language.
+        :param bool default_models: If the default_models parameter isn't specified, the service will return all models (default_models and non-default_models) for each language pair. To return only default_models models, set this to `true`. To return only non-default_models models, set this to `false`.
         :return: A `dict` containing the `TranslationModels` response.
         :rtype: dict
         """
-        params = {'source': source, 'target': target, 'default': default_models}
-        url = '/v2/models'
-        response = self.request(
-            method='GET', url=url, params=params, accept_json=True)
+        params = {
+            'source': source,
+            'target': target,
+            'default': default_models
+        }
+        url='/v2/models'
+        response = self.request(method='GET',
+            url=url,
+            params=params,
+            accept_json=True)
         return response
+
 
 
 ##############################################################################
@@ -271,9 +319,7 @@ class DeleteModelResult(object):
         if 'status' in _dict:
             args['status'] = _dict['status']
         else:
-            raise ValueError(
-                'Required property \'status\' not present in DeleteModelResult JSON'
-            )
+            raise ValueError('Required property \'status\' not present in DeleteModelResult JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -302,7 +348,7 @@ class IdentifiableLanguage(object):
     """
     IdentifiableLanguage.
 
-    :attr str language: The code for an identifiable language.
+    :attr str language: The language code for an identifiable language.
     :attr str name: The name of the identifiable language.
     """
 
@@ -310,7 +356,7 @@ class IdentifiableLanguage(object):
         """
         Initialize a IdentifiableLanguage object.
 
-        :param str language: The code for an identifiable language.
+        :param str language: The language code for an identifiable language.
         :param str name: The name of the identifiable language.
         """
         self.language = language
@@ -323,15 +369,11 @@ class IdentifiableLanguage(object):
         if 'language' in _dict:
             args['language'] = _dict['language']
         else:
-            raise ValueError(
-                'Required property \'language\' not present in IdentifiableLanguage JSON'
-            )
+            raise ValueError('Required property \'language\' not present in IdentifiableLanguage JSON')
         if 'name' in _dict:
             args['name'] = _dict['name']
         else:
-            raise ValueError(
-                'Required property \'name\' not present in IdentifiableLanguage JSON'
-            )
+            raise ValueError('Required property \'name\' not present in IdentifiableLanguage JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -378,13 +420,9 @@ class IdentifiableLanguages(object):
         """Initialize a IdentifiableLanguages object from a json dictionary."""
         args = {}
         if 'languages' in _dict:
-            args['languages'] = [
-                IdentifiableLanguage._from_dict(x) for x in _dict['languages']
-            ]
+            args['languages'] = [IdentifiableLanguage._from_dict(x) for x in _dict['languages']]
         else:
-            raise ValueError(
-                'Required property \'languages\' not present in IdentifiableLanguages JSON'
-            )
+            raise ValueError('Required property \'languages\' not present in IdentifiableLanguages JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -413,7 +451,7 @@ class IdentifiedLanguage(object):
     """
     IdentifiedLanguage.
 
-    :attr str language: The code for an identified language.
+    :attr str language: The language code for an identified language.
     :attr float confidence: The confidence score for the identified language.
     """
 
@@ -421,7 +459,7 @@ class IdentifiedLanguage(object):
         """
         Initialize a IdentifiedLanguage object.
 
-        :param str language: The code for an identified language.
+        :param str language: The language code for an identified language.
         :param float confidence: The confidence score for the identified language.
         """
         self.language = language
@@ -434,15 +472,11 @@ class IdentifiedLanguage(object):
         if 'language' in _dict:
             args['language'] = _dict['language']
         else:
-            raise ValueError(
-                'Required property \'language\' not present in IdentifiedLanguage JSON'
-            )
+            raise ValueError('Required property \'language\' not present in IdentifiedLanguage JSON')
         if 'confidence' in _dict:
             args['confidence'] = _dict['confidence']
         else:
-            raise ValueError(
-                'Required property \'confidence\' not present in IdentifiedLanguage JSON'
-            )
+            raise ValueError('Required property \'confidence\' not present in IdentifiedLanguage JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -489,13 +523,9 @@ class IdentifiedLanguages(object):
         """Initialize a IdentifiedLanguages object from a json dictionary."""
         args = {}
         if 'languages' in _dict:
-            args['languages'] = [
-                IdentifiedLanguage._from_dict(x) for x in _dict['languages']
-            ]
+            args['languages'] = [IdentifiedLanguage._from_dict(x) for x in _dict['languages']]
         else:
-            raise ValueError(
-                'Required property \'languages\' not present in IdentifiedLanguages JSON'
-            )
+            raise ValueError('Required property \'languages\' not present in IdentifiedLanguages JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -542,17 +572,13 @@ class Translation(object):
         if 'translation' in _dict:
             args['translation_output'] = _dict['translation']
         else:
-            raise ValueError(
-                'Required property \'translation\' not present in Translation JSON'
-            )
+            raise ValueError('Required property \'translation\' not present in Translation JSON')
         return cls(**args)
 
     def _to_dict(self):
         """Return a json dictionary representing this model."""
         _dict = {}
-        if hasattr(
-                self,
-                'translation_output') and self.translation_output is not None:
+        if hasattr(self, 'translation_output') and self.translation_output is not None:
             _dict['translation'] = self.translation_output
         return _dict
 
@@ -575,41 +601,31 @@ class TranslationModel(object):
     """
     Response payload for models.
 
-    :attr str model_id: A globally unique string that identifies the underlying model that is used for translation. This string contains all the information about source language, target language, domain, and various other related configurations.
-    :attr str name: (optional) If a model is trained by a user, there might be an optional “name” parameter attached during training to help the user identify the model.
-    :attr str source: (optional) Source language in two letter language code. Use the five letter code when clarifying between multiple supported languages. When model_id is used directly, it will override the source-target language combination. Also, when a two letter language code is used, but no suitable default is found, it returns an error.
-    :attr str target: (optional) Target language in two letter language code.
-    :attr str base_model_id: (optional) If this model is a custom model, this returns the base model that it is trained on. For a base model, this response value is empty.
+    :attr str model_id: A globally unique string that identifies the underlying model that is used for translation.
+    :attr str name: (optional) Optional name that can be specified when the model is created.
+    :attr str source: (optional) Translation source language code.
+    :attr str target: (optional) Translation target language code.
+    :attr str base_model_id: (optional) Model ID of the base model that was used to customize the model. If the model is not a custom model, this will be an empty string.
     :attr str domain: (optional) The domain of the translation model.
-    :attr bool customizable: (optional) Whether this model can be used as a base for customization. Customized models are not further customizable, and we don't allow the customization of certain base models.
-    :attr bool default_model: (optional) Whether this model is considered a default model and is used when the source and target languages are specified without the model_id.
-    :attr str owner: (optional) Returns the Bluemix ID of the instance that created the model, or an empty string if it is a model that is trained by IBM.
+    :attr bool customizable: (optional) Whether this model can be used as a base for customization. Customized models are not further customizable, and some base models are not customizable.
+    :attr bool default_model: (optional) Whether or not the model is a default model. A default model is the model for a given language pair that will be used when that language pair is specified in the source and target parameters.
+    :attr str owner: (optional) Either an empty string, indicating the model is not a custom model, or the ID of the service instance that created the model.
     :attr str status: (optional) Availability of a model.
     """
 
-    def __init__(self,
-                 model_id,
-                 name=None,
-                 source=None,
-                 target=None,
-                 base_model_id=None,
-                 domain=None,
-                 customizable=None,
-                 default_model=None,
-                 owner=None,
-                 status=None):
+    def __init__(self, model_id, name=None, source=None, target=None, base_model_id=None, domain=None, customizable=None, default_model=None, owner=None, status=None):
         """
         Initialize a TranslationModel object.
 
-        :param str model_id: A globally unique string that identifies the underlying model that is used for translation. This string contains all the information about source language, target language, domain, and various other related configurations.
-        :param str name: (optional) If a model is trained by a user, there might be an optional “name” parameter attached during training to help the user identify the model.
-        :param str source: (optional) Source language in two letter language code. Use the five letter code when clarifying between multiple supported languages. When model_id is used directly, it will override the source-target language combination. Also, when a two letter language code is used, but no suitable default is found, it returns an error.
-        :param str target: (optional) Target language in two letter language code.
-        :param str base_model_id: (optional) If this model is a custom model, this returns the base model that it is trained on. For a base model, this response value is empty.
+        :param str model_id: A globally unique string that identifies the underlying model that is used for translation.
+        :param str name: (optional) Optional name that can be specified when the model is created.
+        :param str source: (optional) Translation source language code.
+        :param str target: (optional) Translation target language code.
+        :param str base_model_id: (optional) Model ID of the base model that was used to customize the model. If the model is not a custom model, this will be an empty string.
         :param str domain: (optional) The domain of the translation model.
-        :param bool customizable: (optional) Whether this model can be used as a base for customization. Customized models are not further customizable, and we don't allow the customization of certain base models.
-        :param bool default_model: (optional) Whether this model is considered a default model and is used when the source and target languages are specified without the model_id.
-        :param str owner: (optional) Returns the Bluemix ID of the instance that created the model, or an empty string if it is a model that is trained by IBM.
+        :param bool customizable: (optional) Whether this model can be used as a base for customization. Customized models are not further customizable, and some base models are not customizable.
+        :param bool default_model: (optional) Whether or not the model is a default model. A default model is the model for a given language pair that will be used when that language pair is specified in the source and target parameters.
+        :param str owner: (optional) Either an empty string, indicating the model is not a custom model, or the ID of the service instance that created the model.
         :param str status: (optional) Availability of a model.
         """
         self.model_id = model_id
@@ -630,9 +646,7 @@ class TranslationModel(object):
         if 'model_id' in _dict:
             args['model_id'] = _dict['model_id']
         else:
-            raise ValueError(
-                'Required property \'model_id\' not present in TranslationModel JSON'
-            )
+            raise ValueError('Required property \'model_id\' not present in TranslationModel JSON')
         if 'name' in _dict:
             args['name'] = _dict['name']
         if 'source' in _dict:
@@ -713,13 +727,9 @@ class TranslationModels(object):
         """Initialize a TranslationModels object from a json dictionary."""
         args = {}
         if 'models' in _dict:
-            args['models'] = [
-                TranslationModel._from_dict(x) for x in _dict['models']
-            ]
+            args['models'] = [TranslationModel._from_dict(x) for x in _dict['models']]
         else:
-            raise ValueError(
-                'Required property \'models\' not present in TranslationModels JSON'
-            )
+            raise ValueError('Required property \'models\' not present in TranslationModels JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -748,18 +758,18 @@ class TranslationResult(object):
     """
     TranslationResult.
 
-    :attr int word_count: Number of words of the complete input text.
-    :attr int character_count: Number of characters of the complete input text.
-    :attr list[Translation] translations: List of translation output in UTF-8, corresponding to the list of input text.
+    :attr int word_count: Number of words in the input text.
+    :attr int character_count: Number of characters in the input text.
+    :attr list[Translation] translations: List of translation output in UTF-8, corresponding to the input text entries.
     """
 
     def __init__(self, word_count, character_count, translations):
         """
         Initialize a TranslationResult object.
 
-        :param int word_count: Number of words of the complete input text.
-        :param int character_count: Number of characters of the complete input text.
-        :param list[Translation] translations: List of translation output in UTF-8, corresponding to the list of input text.
+        :param int word_count: Number of words in the input text.
+        :param int character_count: Number of characters in the input text.
+        :param list[Translation] translations: List of translation output in UTF-8, corresponding to the input text entries.
         """
         self.word_count = word_count
         self.character_count = character_count
@@ -772,23 +782,15 @@ class TranslationResult(object):
         if 'word_count' in _dict:
             args['word_count'] = _dict['word_count']
         else:
-            raise ValueError(
-                'Required property \'word_count\' not present in TranslationResult JSON'
-            )
+            raise ValueError('Required property \'word_count\' not present in TranslationResult JSON')
         if 'character_count' in _dict:
             args['character_count'] = _dict['character_count']
         else:
-            raise ValueError(
-                'Required property \'character_count\' not present in TranslationResult JSON'
-            )
+            raise ValueError('Required property \'character_count\' not present in TranslationResult JSON')
         if 'translations' in _dict:
-            args['translations'] = [
-                Translation._from_dict(x) for x in _dict['translations']
-            ]
+            args['translations'] = [Translation._from_dict(x) for x in _dict['translations']]
         else:
-            raise ValueError(
-                'Required property \'translations\' not present in TranslationResult JSON'
-            )
+            raise ValueError('Required property \'translations\' not present in TranslationResult JSON')
         return cls(**args)
 
     def _to_dict(self):
@@ -796,8 +798,7 @@ class TranslationResult(object):
         _dict = {}
         if hasattr(self, 'word_count') and self.word_count is not None:
             _dict['word_count'] = self.word_count
-        if hasattr(self,
-                   'character_count') and self.character_count is not None:
+        if hasattr(self, 'character_count') and self.character_count is not None:
             _dict['character_count'] = self.character_count
         if hasattr(self, 'translations') and self.translations is not None:
             _dict['translations'] = [x._to_dict() for x in self.translations]
@@ -816,3 +817,5 @@ class TranslationResult(object):
     def __ne__(self, other):
         """Return `true` when self and other are not equal, false otherwise."""
         return not self == other
+
+
